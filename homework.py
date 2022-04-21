@@ -104,18 +104,21 @@ def parse_status(homework):
         raise KeyError('Ошибка с ключем status')
     homework_status = homework['status']
     verdict = HOMEWORK_STATUSES[homework_status]
+    if verdict is None:
+        raise KeyError('Недокументированный статус домашней работы, '
+                       'обнаруженный в ответе API.')
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def check_tokens():
     """Проверяет доступность переменных окружения."""
-    if all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
-        return True
+    return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def main():
     """Основная логика работы бота."""
-    check_tokens()
+    if not check_tokens():
+        raise KeyError('Ошибка окружения')
     updater = Updater(TELEGRAM_TOKEN)
     updater.dispatcher.add_handler(CommandHandler('start', wake_up))
     updater.start_polling()
@@ -134,8 +137,9 @@ def main():
             current_timestamp = response.get('current_date')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
+            if status_old != message:
+                send_message(bot, message)
             logger.error(f'Проблема с работой. Ошибка {error}')
-            send_message(bot, message)
         finally:
             time.sleep(RETRY_TIME)
 
