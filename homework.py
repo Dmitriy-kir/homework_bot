@@ -139,6 +139,7 @@ def main():
             message = f'Сбой в работе программы: {error}'
             if status_old != message:
                 send_message(bot, message)
+            status_old = message
             logger.error(f'Проблема с работой. Ошибка {error}')
         finally:
             time.sleep(RETRY_TIME)
